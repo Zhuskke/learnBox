@@ -1,4 +1,4 @@
-'''
+
 from django import forms
 from django.contrib.auth import get_user_model
 
@@ -33,4 +33,3 @@ class RegisterForm(forms.ModelForm):
         if commit:
             user.save()
         return user
-'''
