@@ -1,75 +1,126 @@
-from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
+from django.urls import reverse
+from django.contrib.auth.models import AbstractUser, UserManager
+from django.conf import settings
 
-# Create your models here.
-class UserManager(BaseUserManager):
-    def create_user(self, email, password=None, is_active=True, is_staff=False, is_admin=False):
-        if not email:
-            raise ValueError("Must have email")
-        if not password:
-            raise ValueError("Must have password")
+from django.db.models import Q
+from PIL import Image
+from .validators import ASCIIUsernameValidator
 
-        user_obj = self.model(
-            email = self.normalize_email(email)
-        )
-        user_obj.set_password(password)
-        user_obj.staff = is_staff
-        user_obj.admin = is_admin
-        user_obj.active = is_active
-        user_obj.save(using=self._db)
+FATHER = "Father"
+MOTHER = "Mother"
+OTHER = "Other"
 
-        return user_obj
+RELATION_SHIP = (
+    (FATHER, "Father"),
+    (MOTHER, "Mother"),
+    (OTHER, "Other"),
+)
 
-    def create_staffuser(self, email, password=None):
-        user = self.create_user(
-            email,
-            password=password,
-            is_staff=True,
-            is_active=True
-        )
-        return user
+class UserManager(UserManager):
+    def search(self, query=None):
+        qs = self.get_queryset()
+        if query is not None:
+            or_lookup = (Q(username__icontains=query) |
+                         Q(first_name__icontains=query)|
+                         Q(last_name__icontains=query)|
+                         Q(email__icontains=query)
+                        )
+            qs = qs.filter(or_lookup).distinct() # distinct() is often necessary with Q lookups
+        return qs
 
-    def create_superuser(self, email, password=None):
-        user = self.create_user(
-            email=email,
-            password=password,
-            is_staff=True,
-            is_admin=True,
-            is_active=True,
-        )
-        return User
 
-class User(AbstractBaseUser):
-    email = models.EmailField(max_length=150, unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    active = models.BooleanField(default=True)
-    staff = models.BooleanField(default=False)
-    admin = models.BooleanField(default=False)
-    timestamp = models.DateTimeField(auto_now_add=True)
+class User(AbstractUser):
+    is_student = models.BooleanField(default=False)
+    is_teacher = models.BooleanField(default=False)
+    is_parent = models.BooleanField(default=False)
+    phone = models.CharField(max_length=60, blank=True, null=True)
+    address = models.CharField(max_length=60, blank=True, null=True)
+    picture = models.ImageField(upload_to='profile_pictures/%y/%m/%d/', default='default.png', null=True)
+    email = models.EmailField(blank=True, null=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    username_validator = ASCIIUsernameValidator()
 
     objects = UserManager()
 
+    @property
+    def get_full_name(self):
+        full_name = self.username
+        if self.first_name and self.last_name:
+            full_name = self.first_name + " " + self.last_name
+        return full_name
+
     def __str__(self):
-        return self.email
-
-    def has_perm(self, perm, obj=None):
-        return True
-
-    def has_module_perms(self, app_label):
-        return True
+        return '{} ({})'.format(self.username, self.get_full_name)
 
     @property
-    def is_staff(self):
-        return self.staff
+    def get_user_role(self):
+        if self.is_superuser:
+            return "Admin"
+        elif self.is_student:
+            return "Student"
+        elif self.is_teacher:
+            return "Teacher"
+        elif self.is_parent:
+            return "Parent"
 
-    @property
-    def is_admin(self):
-        return self.admin
+    def get_picture(self):
+        try:
+            return self.picture.url
+        except:
+            no_picture = settings.MEDIA_URL + 'default.png'
+            return no_picture
 
-    @property
-    def is_active(self):
-        return self.active
+    def get_absolute_url(self):
+        return reverse('profile_single', kwargs={'id': self.id})
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        try:
+            img = Image.open(self.picture.path)
+            if img.height > 300 or img.width > 300:
+                output_size = (300, 300)
+                img.thumbnail(output_size)
+                img.save(self.picture.path)
+        except:
+            pass
+
+    def delete(self, *args, **kwargs):
+        if self.picture.url != settings.MEDIA_URL + 'default.png':
+            self.picture.delete()
+        super().delete(*args, **kwargs)
+
+
+
+
+class Student(models.Model):
+    student = models.OneToOneField(User, on_delete=models.CASCADE)
+    # id_number = models.CharField(max_length=20, unique=True, blank=True)
+    def __str__(self):
+        return self.student.get_full_name
+
+    def get_absolute_url(self):
+        return reverse('profile_single', kwargs={'id': self.id})
+
+    def delete(self, *args, **kwargs):
+        self.student.delete()
+        super().delete(*args, **kwargs)
+
+
+class Parent(models.Model):
+    """
+    Connect student with their parent, parents can
+    only view their connected students information
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    student = models.OneToOneField(Student, null=True, on_delete=models.SET_NULL)
+    first_name = models.CharField(max_length=120)
+    last_name = models.CharField(max_length=120)
+    phone = models.CharField(max_length=60, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+
+    # What is the relationship between the student and the parent (i.e. father, mother, brother, sister)
+    relation_ship = models.TextField(choices=RELATION_SHIP, blank=True)
+
+    def __str__(self):
+        return self.user.username
