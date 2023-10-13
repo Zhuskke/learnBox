@@ -31,6 +31,11 @@ urlpatterns = [
     path('', home, name='home'),
     path('upload/', include('upload.urls')),
     path('register/', upload.views.register_page, name='register'),
+    path('dashboard/', dashboard, name='dashboard'),
+    path('announcement/', announcement, name='announcement'),
+    path('calendar/', calendar, name='calendar'),
+    path('learner_view_profile/', learner_view_profile, name='learnerprofile '),
+    path('activities/', activities, name='activities'),
    # path('contact/', contact_page),
 ]
 
