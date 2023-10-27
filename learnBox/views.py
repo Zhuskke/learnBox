@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 def home(request):
-    return render(request, "home.html", {})
+    return render(request, "home1.html", {})
 
 def learner_view_profile(request):
     return render(request, 'learner_template/learner_view_profile.html', {})
