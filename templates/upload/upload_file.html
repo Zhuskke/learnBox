@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload</title>
+</head>
+<body>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-outline">
+        {{ form.as_p }}
+        <br>
+         <input type="submit">
+    </div>
+
+
+</form>
+</body>
+</html>

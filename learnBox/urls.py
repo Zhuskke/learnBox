@@ -30,7 +30,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
     path('upload/', include('upload.urls')),
-    path('register/', upload.views.register_page, name='register'),
     path('dashboard/', dashboard, name='dashboard'),
     path('announcement/', announcement, name='announcement'),
     path('calendar/', calendar, name='calendar'),
