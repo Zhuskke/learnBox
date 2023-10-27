@@ -5,4 +5,4 @@ from .models import TaskSubmission
 class TaskSubmissionForm(forms.ModelForm):
     class Meta:
         model = TaskSubmission
-        fields = ['file']
+        fields = ['user', 'file']
