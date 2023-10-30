@@ -35,6 +35,7 @@ urlpatterns = [
     path('calendar/', calendar, name='calendar'),
     path('learner_view_profile/', learner_view_profile, name='learnerprofile '),
     path('activities/', activities, name='activities'),
+    path('accounts/', include('accounts.urls'))
    # path('contact/', contact_page),
 ]
 

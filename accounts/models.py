@@ -1,5 +1,4 @@
 from django.db import models
-from django.urls import reverse
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.conf import settings
 
@@ -17,16 +16,17 @@ RELATION_SHIP = (
     (OTHER, "Other"),
 )
 
-class UserManager(UserManager):
+
+class CustomUserManager(UserManager):
     def search(self, query=None):
         qs = self.get_queryset()
         if query is not None:
             or_lookup = (Q(username__icontains=query) |
-                         Q(first_name__icontains=query)|
-                         Q(last_name__icontains=query)|
+                         Q(first_name__icontains=query) |
+                         Q(last_name__icontains=query) |
                          Q(email__icontains=query)
-                        )
-            qs = qs.filter(or_lookup).distinct() # distinct() is often necessary with Q lookups
+                         )
+            qs = qs.filter(or_lookup).distinct()  # distinct() is often necessary with Q lookups
         return qs
 
 
@@ -37,90 +37,26 @@ class User(AbstractUser):
     phone = models.CharField(max_length=60, blank=True, null=True)
     address = models.CharField(max_length=60, blank=True, null=True)
     picture = models.ImageField(upload_to='profile_pictures/%y/%m/%d/', default='default.png', null=True)
-    email = models.EmailField(blank=True, null=True)
-
+    email = models.EmailField(unique=True, blank=True, null=True)
+    admin = models.BooleanField(default=False)
+    class Meta:
+        unique_together = []
     username_validator = ASCIIUsernameValidator()
 
-    objects = UserManager()
+    # Remove the unique constraint from the username field
+    username = models.CharField(
+        max_length=150,
+        unique=True,  # Remove the unique constraint
+        validators=[username_validator],
+        error_messages={
+            'unique': "A user with that username already exists.",
+        }
+    )
 
-    @property
-    def get_full_name(self):
-        full_name = self.username
-        if self.first_name and self.last_name:
-            full_name = self.first_name + " " + self.last_name
-        return full_name
+    USERNAME_FIELD = 'email'
 
-    def __str__(self):
-        return '{} ({})'.format(self.username, self.get_full_name)
+    REQUIRED_FIELDS = []
 
-    @property
-    def get_user_role(self):
-        if self.is_superuser:
-            return "Admin"
-        elif self.is_student:
-            return "Student"
-        elif self.is_teacher:
-            return "Teacher"
-        elif self.is_parent:
-            return "Parent"
+    objects = CustomUserManager()
 
-    def get_picture(self):
-        try:
-            return self.picture.url
-        except:
-            no_picture = settings.MEDIA_URL + 'default.png'
-            return no_picture
-
-    def get_absolute_url(self):
-        return reverse('profile_single', kwargs={'id': self.id})
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        try:
-            img = Image.open(self.picture.path)
-            if img.height > 300 or img.width > 300:
-                output_size = (300, 300)
-                img.thumbnail(output_size)
-                img.save(self.picture.path)
-        except:
-            pass
-
-    def delete(self, *args, **kwargs):
-        if self.picture.url != settings.MEDIA_URL + 'default.png':
-            self.picture.delete()
-        super().delete(*args, **kwargs)
-
-
-
-
-class Student(models.Model):
-    student = models.OneToOneField(User, on_delete=models.CASCADE)
-    # id_number = models.CharField(max_length=20, unique=True, blank=True)
-    def __str__(self):
-        return self.student.get_full_name
-
-    def get_absolute_url(self):
-        return reverse('profile_single', kwargs={'id': self.id})
-
-    def delete(self, *args, **kwargs):
-        self.student.delete()
-        super().delete(*args, **kwargs)
-
-
-class Parent(models.Model):
-    """
-    Connect student with their parent, parents can
-    only view their connected students information
-    """
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    student = models.OneToOneField(Student, null=True, on_delete=models.SET_NULL)
-    first_name = models.CharField(max_length=120)
-    last_name = models.CharField(max_length=120)
-    phone = models.CharField(max_length=60, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-
-    # What is the relationship between the student and the parent (i.e. father, mother, brother, sister)
-    relation_ship = models.TextField(choices=RELATION_SHIP, blank=True)
-
-    def __str__(self):
-        return self.user.username
+    # Rest of your User model remains the same
