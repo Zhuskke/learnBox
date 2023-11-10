@@ -3,6 +3,8 @@ from django.contrib.auth.views import (
     PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView,
     PasswordResetCompleteView, LoginView, LogoutView
     )
+
+import Core
 from .views import (
         profile, profile_single, admin_panel,
         profile_update, change_password,
@@ -36,8 +38,9 @@ urlpatterns = [
     path('parents/add/', ParentAdd.as_view(), name='add_parent'),
 
     path('ajax/validate-username/', validate_username, name='validate_username'),
-
+    path('core/', Core, namespace='core'),
     path('register/', register, name='register'),
+
 
     # path('add-student/', StudentAddView.as_view(), name='add_student'),
 
