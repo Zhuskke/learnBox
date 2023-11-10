@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-from Learn_Box import settings
+from learnBox import settings
 
 
 # create a new user

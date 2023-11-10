@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from accounts.models import Account
+from Accounts.models import Account
 from django.utils import timezone
 
 # Create your models here.
