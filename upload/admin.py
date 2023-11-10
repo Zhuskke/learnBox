@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .forms import TaskSubmission
+from .forms import AssignmentSubmission
 # Register your models here.
 
 
-admin.site.register(TaskSubmission)
+admin.site.register(AssignmentSubmission)

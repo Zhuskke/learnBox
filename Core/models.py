@@ -1,11 +1,11 @@
 from django.db import models
-from accounts import *
-from authentication.models import User
+from accounts.models import Account
+#from authentication.models import User
 from django.utils import timezone
 
 
 class Course(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
     course_name = models.CharField(max_length=100)
     course_image = models.ImageField(upload_to='media')
     teacher_name = models.CharField(max_length=50)
@@ -19,7 +19,7 @@ class Course(models.Model):
 
 
 class Assignment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     content = models.TextField()
     marks = models.CharField(max_length=20)
@@ -30,7 +30,7 @@ class Assignment(models.Model):
         return self.title
 
 class AssignmentSubmission(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     university_id = models.CharField(max_length=100)
     content = models.TextField(null=True, blank=True)

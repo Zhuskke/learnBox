@@ -30,7 +30,7 @@ class CustomUserManager(UserManager):
         return qs
 
 
-class User(AbstractUser):
+class Account(AbstractUser):
     is_student = models.BooleanField(default=False)
     is_teacher = models.BooleanField(default=False)
     is_parent = models.BooleanField(default=False)
