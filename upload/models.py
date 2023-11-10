@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from accounts.models import User
+from accounts.models import Account
 from django.utils import timezone
 
 # Create your models here.
@@ -11,7 +11,7 @@ class AssignmentSubmission(models.Model):
         return self.university_id
 
 class Assignment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     content = models.TextField()
     marks = models.CharField(max_length=20)
